@@ -25,16 +25,16 @@ class Update_Task_Request extends FormRequest
      */
     public function rules(): array
     {
-        $user_id = $this->route('user');
-
+        $id = $this->task->id;
         return [            
-            'title' => 'sometimes|nullable|string|unique:tasks,title|min:4|max:50',
+            'title' => 'sometimes|nullable|string|min:4|max:50|unique:tasks,title,'.$id,
             'description' => 'sometimes|nullable|string|min:20|max:255',
             'type' => 'sometimes|nullable|string|in:Bug,Feature,Improvment',
-            'status' => 'sometimes|nullable|string|in:In progress,Completed',
             'priority' => 'sometimes|nullable|string|in:Low,Medium,High',
             'due_date' => 'sometimes|nullable|date|after_or_equal:today',
             'assigned_to' => 'sometimes|nullable|integer|exists:users,id',
+            'depends_on' => 'sometimes|nullable|array',
+            'depends_on.*.id' => 'sometimes|nullable|exists:tasks,id',
         ];
     }
     //===========================================================================================================================
@@ -76,9 +76,8 @@ class Update_Task_Request extends FormRequest
             'title.max' => 'الحد الأقصى لطول  :attribute هو 50 حرف',
             'description.min' => 'الحد الأدنى لطول :attribute على الأقل هو 20 حرف',
             'description.max' => 'الحد الأقصى لطول  :attribute هو 255 حرف',
-            'type.in' => 'يجب أن يكون  :attribute إحدى الأتواع التالية : Bug أو Feature أو Improvment ',
-            'status.in' => 'يجب أن يكون دور :attribute إحدى الأدوار التالية : In progress أو Completed ',
-            'priority.in' => 'يجب أن تكون قيمة الحقل إحدى القيم التالية : High,Medium,Low',
+            'type.in' => 'يجب أن يكون  :attribute إحدى الأنواع التالية : Bug أو Feature أو Improvment ',
+            'priority.in' => 'يجب أن تكون قيمة الحقل :attribute إحدى القيم التالية : High,Medium,Low',
             'date' => 'يجب أن يكون الحقل :attribute تاريخاً',
             'after_or_equal' => 'يجب أن بكون :attribute بتاريخ اليوم و ما بعد',
             'integer' => 'يجب أن يكون الحقل :attribute من نمط int',

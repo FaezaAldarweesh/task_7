@@ -17,6 +17,7 @@ class Task extends Model
         'priority',
         'due_date',
         'assigned_to',
+        'depends_on',
     ];
 
     public function user(){
@@ -24,8 +25,8 @@ class Task extends Model
         return $this->belongsTo(User::class,'assigned_to','id');
     }
 
-    public function Task_dependencies (){
-        
-        return $this->belongsToMany(Task_dependency::class);
+    public function Task_dependencies() {
+
+        return $this->belongsToMany(Task::class, 'task_dependencies', 'task_id', 'depends_id');
     }
 }

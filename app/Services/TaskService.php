@@ -17,69 +17,61 @@ class TaskService {
      */
     public function get_all_Tasks(){
         try {
-            $task = Task::filter()->get();
+            $task = Task::with('Task_dependencies')->get();
             return $task;
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with fetche tasks', 400);}
     }
-    //========================================================================================================================
+//========================================================================================================================
     /**
      * method to store a new task
      * @param   $data
-     * @return /Illuminate\Http\JsonResponse ig have an error
+     * @return \Illuminate\Http\JsonResponse
      */
     public function create_Task($data) {
         try {
-            if($data['depends_on'] == Null){
-                $task = new Task();
-                $task->title = $data['title'];
-                $task->description = $data['description'];
-                $task->type = $data['type'];
-                $task->status = 'Open';
-                $task->priority = $data['priority'];
-                $task->due_date = $data['due_date'];
-                $task->assigned_to = $data['assigned_to'];
-                $task->depends_on = 0;
-            }else{
-                foreach($data['depends_on'] as $depend){
-                    $depend_id = $depend['id'];
-                    $check_status_task = Task::select('status')->where('id',$depend_id)->get();
+            $task = new Task();
+            $task->title = $data['title'];
+            $task->description = $data['description'];
+            $task->type = $data['type'];
+            $task->priority = $data['priority'];
+            $task->due_date = $data['due_date'];
+            $task->assigned_to = $data['assigned_to'];
 
-                    if($check_status_task != 'Completed'){
-                        $task = new Task();
-                        $task->title = $data['title'];
-                        $task->description = $data['description'];
-                        $task->type = $data['type'];
+            if ($data['depends_on'] == null) {
+                $task->status = 'Open';
+                $task->depends_on = 0;
+            } else {
+                $task->depends_on = 1;
+                foreach ($data['depends_on'] as $depend) {
+                    $depend_id = $depend['id'];
+                    $check_status_task = Task::select('id', 'status')->where('id', '=', $depend_id)->first();
+
+                    if ($check_status_task && $check_status_task->status != 'Completed') {
                         $task->status = 'Blocked';
-                        $task->priority = $data['priority'];
-                        $task->due_date = $data['due_date'];
-                        $task->assigned_to = $data['assigned_to'];
-                        $task->depends_on = 1;
                         break;
-                    }else{
-                        $task = new Task();
-                        $task->title = $data['title'];
-                        $task->description = $data['description'];
-                        $task->type = $data['type'];
+                    } else {
                         $task->status = 'Open';
-                        $task->priority = $data['priority'];
-                        $task->due_date = $data['due_date'];
-                        $task->assigned_to = $data['assigned_to'];
-                        $task->depends_on = 1;
                     }
                 }
+            }
 
-                foreach($data['depends_on'] as $depend){
+            $task->save();
+
+            if ($data['depends_on'] != null) {
+                foreach ($data['depends_on'] as $depend) {
                     $depend_id = $depend['id'];
                     $task->Task_dependencies()->attach($depend_id);
                 }
             }
-            
-            $task->save(); 
-            return $task; 
 
-        } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with create task', 400);}
-    }    
-    //========================================================================================================================
+            return $task;
+
+        } catch (\Throwable $th) {
+            Log::error($th->getMessage());
+            return $this->failed_Response('Something went wrong with creating the task', 400);
+        }
+    }
+//========================================================================================================================
     /**
      * method to update task alraedy exist
      * @param  $data
@@ -92,17 +84,40 @@ class TaskService {
             $task->title = $data['title'] ?? $task->title;
             $task->description = $data['description'] ?? $task->description;
             $task->type = $data['type'] ?? $task->type;
-            $task->status = $data['status'] ?? $task->status;
             $task->priority = $data['priority'] ?? $task->priority;
             $task->due_date = $data['due_date'] ?? $task->due_date;
             $task->assigned_to = $data['assigned_to'] ?? $task->assigned_to;
 
-            $task->save(); 
-            return $task; 
+            if ($data['depends_on'] == null) {
+                $task->status = 'Open';
+                $task->depends_on = 0;
+            } else {
+                $task->depends_on = 1;
+                foreach ($data['depends_on'] as $depend) {
+                    $depend_id = $depend['id'];
+                    $check_status_task = Task::select('id', 'status')->where('id', '=', $depend_id)->first();
+
+                    if ($check_status_task && $check_status_task->status != 'Completed') {
+                        $task->status = 'Blocked';
+                        break;
+                    } else {
+                        $task->status = 'Open';
+                    }
+                }
+            }
+
+            $task->save();
+
+            if ($data['depends_on'] != null) { 
+                $depend_ids = collect($data['depends_on'])->pluck('id')->toArray(); 
+                $task->Task_dependencies()->sync($depend_ids);
+            }
+            
+            return $task;
 
         }catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with view task', 400);}
     }
-    //========================================================================================================================
+//========================================================================================================================
     /**
      * method to show task alraedy exist
      * @param  $task_id
@@ -118,7 +133,7 @@ class TaskService {
         } catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 404);
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with update task', 400);}
     }
-    //========================================================================================================================
+//========================================================================================================================
     /**
      * method to soft delete task alraedy exist
      * @param  Task $task
@@ -136,7 +151,7 @@ class TaskService {
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with deleting task', 400);}
     }
-    //========================================================================================================================
+//========================================================================================================================
     /**
      * method to return all soft delete tasks
      * @return /Illuminate\Http\JsonResponse if have an error
@@ -148,7 +163,7 @@ class TaskService {
             return $tasks;
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with view trashed task', 400);}
     }
-    //========================================================================================================================
+//========================================================================================================================
     /**
      * method to restore soft delete task alraedy exist
      * @param   $task_id
@@ -166,7 +181,7 @@ class TaskService {
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with restore task', 400);
         }
     }
-    //========================================================================================================================
+//========================================================================================================================
     /**
      * method to force delete on task that soft deleted before
      * @param   $task_id
@@ -183,6 +198,5 @@ class TaskService {
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);   
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with deleting task', 400);}
     }
-    //========================================================================================================================
-
+//========================================================================================================================
 }
