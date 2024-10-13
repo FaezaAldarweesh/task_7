@@ -12,7 +12,7 @@ class TaskService {
     //trait customize the methods for successful , failed , authentecation responses.
     use ApiResponseTrait;
     /**
-     * method to view all tasks with filter on active
+     * method to view all tasks 
      * @param   Request $request
      * @return /Illuminate\Http\JsonResponse if have an error
      */
@@ -126,7 +126,7 @@ class TaskService {
      */
     public function view_Task($task_id) {
         try {    
-            $task = Task::find($task_id)->load('Task_dependencies');
+            $task = Task::find($task_id)->load('Task_dependencies')->load('comments');
             if(!$task){
                 throw new \Exception('task not found');
             }

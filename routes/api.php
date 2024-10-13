@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
 
@@ -35,4 +36,9 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::get('all_trashed_tasks', [TaskController::class, 'all_trashed_tasks']);
     Route::get('restore_task/{task_id}', [TaskController::class, 'restore']);
     Route::delete('forceDelete_task/{task_id}', [TaskController::class, 'forceDelete']);
+
+    Route::post('add_comment/{id}', [CommentController::class,'store']); 
+    Route::put('update_comment/{comment_id}', [CommentController::class,'update']); 
+    Route::get('all_comment', [CommentController::class,'index']); 
+    Route::delete('delete_comment/{comment_id}', [CommentController::class,'destroy']); 
 });

@@ -25,6 +25,7 @@ class ViewTaskResources extends JsonResource
             'task assigned to' => $this->assigned_to, 
             'task dependencies on' => ($this->depends_on == 0) ? 'it does not have dependeny' : 'it have dependeny', 
             'task dependency ' => TaskDependencyResource::collection($this->whenLoaded('Task_dependencies')),
+            'task comment ' => CommentResources::collection($this->whenLoaded('comments')),
         ];
     }
 }
