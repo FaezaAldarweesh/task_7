@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Task;
 use Illuminate\Support\Facades\Log;
 use App\Http\Traits\ApiResponseTrait;
+use App\Models\Task_dependency;
 use Illuminate\Support\Facades\Request;
 
 class TaskService {
@@ -17,7 +18,7 @@ class TaskService {
      */
     public function get_all_Tasks(){
         try {
-            $task = Task::with('Task_dependencies')->get();
+            $task = Task::all();
             return $task;
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with fetche tasks', 400);}
     }
@@ -125,7 +126,7 @@ class TaskService {
      */
     public function view_Task($task_id) {
         try {    
-            $task = Task::find($task_id);
+            $task = Task::find($task_id)->load('Task_dependencies');
             if(!$task){
                 throw new \Exception('task not found');
             }
@@ -146,7 +147,13 @@ class TaskService {
             if(!$task){
                 throw new \Exception('task not found');
             }
+            $task_dependancies = Task_dependency::where('task_id',$task_id)->get();
+
             $task->delete();
+            foreach($task_dependancies as $task_dependancy){
+                $task_dependancy->delete();
+            }
+
             return true;
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with deleting task', 400);}
@@ -176,6 +183,12 @@ class TaskService {
             if(!$task){
                 throw new \Exception('task not found');
             }
+            $task_dependancies = Task_dependency::withTrashed()->where('task_id',$task_id)->get();
+
+            foreach($task_dependancies as $task_dependancy){
+                $task_dependancy->restore();
+            }
+
             return $task->restore();
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);   
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with restore task', 400);
@@ -193,6 +206,11 @@ class TaskService {
             $task = Task::onlyTrashed()->find($task_id);
             if(!$task){
                 throw new \Exception('task not found');
+            }
+            $task_dependancies = Task_dependency::onlyTrashed()->where('task_id',$task_id)->get();
+
+            foreach($task_dependancies as $task_dependancy){
+                $task_dependancy->forceDelete();
             }
             return $task->forceDelete();
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);   

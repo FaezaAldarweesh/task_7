@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('task_id')->constrained('tasks')->cascadeOnDelete();
             $table->foreignId('depends_id')->constrained('tasks')->cascadeOnDelete();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

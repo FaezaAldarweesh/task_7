@@ -8,6 +8,7 @@ use App\Services\TaskService;
 use App\Http\Resources\TaskResources;
 use App\Http\Traits\ApiResponseTrait;
 use App\Http\Requests\Store_Task_Request;
+use App\Http\Resources\ViewTaskResources;
 use App\Http\Requests\Update_Task_Request;
 
 class TaskController extends Controller
@@ -61,7 +62,7 @@ class TaskController extends Controller
         if ($task instanceof \Illuminate\Http\JsonResponse) {
             return $task;
         }
-            return $this->success_Response(new TaskResources($task), "Task viewed successfully", 200);
+            return $this->success_Response(new ViewTaskResources($task), "Task viewed successfully", 200);
     }
     //===========================================================================================================================
     /**
@@ -96,7 +97,7 @@ class TaskController extends Controller
      * method to return all soft delete tasks
      * @return /Illuminate\Http\JsonResponse if have an error
      */
-    public function all_trashed_task()
+    public function all_trashed_tasks()
     {
         $tasks = $this->taskservices->all_trashed_task();
         return $this->success_Response(taskResources::collection($tasks), "All trashed tasks fetched successfully", 200);

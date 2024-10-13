@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class TaskResources extends JsonResource
+class ViewTaskResources extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -24,6 +24,7 @@ class TaskResources extends JsonResource
             'task due date' => $this->due_date, 
             'task assigned to' => $this->assigned_to, 
             'task dependencies on' => ($this->depends_on == 0) ? 'it does not have dependeny' : 'it have dependeny', 
+            'task dependency ' => TaskDependencyResource::collection($this->whenLoaded('Task_dependencies')),
         ];
     }
 }
