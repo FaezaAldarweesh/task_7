@@ -3,9 +3,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CommentController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\AttachmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,18 +28,27 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::post('logout',[AuthController::class ,'logout']); 
     Route::post('refresh', [AuthController::class ,'refresh']);
     
+
     Route::apiResource('user',UserController::class); 
     Route::get('all_trashed_user', [UserController::class, 'all_trashed_user']);
     Route::get('restore_user/{user_id}', [UserController::class, 'restore']);
     Route::delete('forceDelete_user/{user_id}', [UserController::class, 'forceDelete']);
+
     
     Route::apiResource('tasks', TaskController::class); 
     Route::get('all_trashed_tasks', [TaskController::class, 'all_trashed_tasks']);
     Route::get('restore_task/{task_id}', [TaskController::class, 'restore']);
     Route::delete('forceDelete_task/{task_id}', [TaskController::class, 'forceDelete']);
 
+
     Route::post('add_comment/{id}', [CommentController::class,'store']); 
     Route::put('update_comment/{comment_id}', [CommentController::class,'update']); 
     Route::get('all_comment', [CommentController::class,'index']); 
     Route::delete('delete_comment/{comment_id}', [CommentController::class,'destroy']); 
+
+
+    Route::post('add_Attachment/{task_id}', [AttachmentController::class,'store']); 
+    Route::put('update_Attachment/{Attachment_id}', [AttachmentController::class,'update']); 
+    Route::get('all_Attachment', [AttachmentController::class,'index']); 
+    Route::delete('delete_Attachment/{Attachment_id}', [AttachmentController::class,'destroy']); 
 });

@@ -89,4 +89,8 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Comment::class);
     }
 
+    public function Attachments(){
+
+        return $this->hasMany(Attachment::class);
+    }
 }
