@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Services;
+namespace App\Services;
 
 use Exception;
+use App\Models\Task;
 use App\Models\Attachment;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
@@ -66,10 +67,13 @@ class AttachmentService {
             $path = Storage::disk('local')->put($filePath, $file, $fileName . '.' . $extension);
     
             // Store file metadata in the database
-            $file = Attachment::create([
-                'name' => $originalName,
+            $task = Task::where('id','=',$task_id)->first();
+
+            $file = $task->attachments()->create([
+                'created_by' => Auth::id(),
+                'name' => $originalName
             ]);
-    
+
             return $file;
 
         } catch (\Throwable $th) {
