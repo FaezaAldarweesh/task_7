@@ -25,8 +25,6 @@ class Update_Attachment_Request extends FormRequest
      */
     public function rules(): array
     {
-        $user_id = $this->route('user');
-
         return [
             'attachment' => 'sometimes|nullable|file|mimes:doc,docx,zip,pdf,txt|max:512000',
         ];
@@ -59,7 +57,7 @@ class Update_Attachment_Request extends FormRequest
     {
         return [
             'file' => 'يجب أن يكون :attribute ملفاَ ',
-            'mimes' => 'يجب أن يكون  :attribute من نمط word , pdf , zip , text',
+            'mimes' => 'يجب أن يكون  :attribute من نمط word , pdf , zip , txt',
             'max' => 'الحد الأقصى لحجم  :attribute هو نصف جيغا ',
         ];
     }

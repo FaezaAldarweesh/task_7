@@ -57,7 +57,7 @@ class Store_Attachment_Request extends FormRequest
         return [
             'required' => ' :attribute مطلوب',
             'file' => 'يجب أن يكون :attribute ملفاَ ',
-            'mimes' => 'يجب أن يكون  :attribute من نمط word , pdf , zip , text',
+            'mimes' => 'يجب أن يكون  :attribute من نمط word , pdf , zip , txt',
             'max' => 'الحد الأقصى لحجم  :attribute هو نصف جيغا ',
         ];
     }

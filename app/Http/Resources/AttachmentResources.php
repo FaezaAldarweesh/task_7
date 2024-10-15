@@ -17,7 +17,7 @@ class AttachmentResources extends JsonResource
         return [
             'attachment id' => $this->id,
             'user name' => $this->user->name, 
-            'attachment' => $this->file, 
+            'attachment' => $this->name, 
         ];
     }
 }

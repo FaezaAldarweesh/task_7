@@ -56,6 +56,7 @@ class AttachmentController extends Controller
      */
     public function update(Update_Attachment_Request $request, $attachment_id)
     {
+
         $attachment = $this->attachmentservices->update_Attachment($request->validated(), $attachment_id);
 
         // In case error messages are returned from the services section 
