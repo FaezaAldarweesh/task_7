@@ -19,8 +19,8 @@ return new class extends Migration
             $table->enum('status',['Open','In progress','Completed','Blocked']);  
             $table->enum('priority',['Low','Medium','High'])->default('Medium');
             $table->date('due_date');
-            $table->foreignId('assigned_to')->constrained('users')->cascadeOnDelete();
-            $table->boolean('depends_on')->default(0);
+            $table->foreignId('assigned_to')->nullable()->constrained('users')->cascadeOnDelete();
+            $table->integer('depends_on')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

@@ -22,7 +22,7 @@ class TaskResources extends JsonResource
             'task status' => $this->status,
             'task priority' => $this->priority, 
             'task due date' => $this->due_date, 
-            'task assigned to' => $this->assigned_to, 
+            'task assigned to' => $this->assigned_to ?? "have not assigned to employee yet", 
             'task dependencies on' => ($this->depends_on == 0) ? 'it does not have dependeny' : 'it have dependeny', 
         ];
     }

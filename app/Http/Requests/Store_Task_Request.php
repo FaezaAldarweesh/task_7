@@ -30,7 +30,7 @@ class Store_Task_Request extends FormRequest
             'type' => 'required|string|in:Bug,Feature,Improvment',
             'priority' => 'required|string|in:Low,Medium,High',
             'due_date' => 'required|date|after_or_equal:today',
-            'assigned_to' => 'required|integer|exists:users,id',
+            'assigned_to' => 'nullable|integer|exists:users,id',
             'depends_on' => 'nullable|array',
             'depends_on.*.id' => 'nullable|exists:tasks,id',
         ];

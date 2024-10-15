@@ -36,13 +36,13 @@ class TaskService {
             $task->type = $data['type'];
             $task->priority = $data['priority'];
             $task->due_date = $data['due_date'];
-            $task->assigned_to = $data['assigned_to'];
+            $task->assigned_to = $data['assigned_to'] ?? null;
 
             if ($data['depends_on'] == null) {
                 $task->status = 'Open';
                 $task->depends_on = 0;
             } else {
-                $task->depends_on = 1;
+                $task->depends_on = count($data['depends_on']);
                 foreach ($data['depends_on'] as $depend) {
                     $depend_id = $depend['id'];
                     $check_status_task = Task::select('id', 'status')->where('id', '=', $depend_id)->first();
@@ -93,7 +93,7 @@ class TaskService {
                 $task->status = 'Open';
                 $task->depends_on = 0;
             } else {
-                $task->depends_on = 1;
+                $task->depends_on = count($data['depends_on']);
                 foreach ($data['depends_on'] as $depend) {
                     $depend_id = $depend['id'];
                     $check_status_task = Task::select('id', 'status')->where('id', '=', $depend_id)->first();
@@ -126,7 +126,7 @@ class TaskService {
      */
     public function view_Task($task_id) {
         try {    
-            $task = Task::find($task_id)->load('Task_dependencies')->load('comments');
+            $task = Task::find($task_id)->load('Task_dependencies')->load('comments')->load('attachments');
             if(!$task){
                 throw new \Exception('task not found');
             }
@@ -216,5 +216,86 @@ class TaskService {
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);   
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with deleting task', 400);}
     }
+//========================================================================================================================
+    /**
+     * method to 
+     * @param   $task_id
+     * @return /Illuminate\Http\JsonResponse if have an error
+     */
+    public function update_status($data, $task_id)
+    {
+        try {
+            // إيجاد المهمة المراد تحديث حالتها
+            $task = Task::find($task_id);
+            if (!$task) {
+                throw new \Exception('Task not found');
+            }
+    
+            // تحقق مما إذا كانت الحالة الجديدة هي نفسها الحالة القديمة
+            if ($task->status === $data['status']) {
+                return $task; // لا تقم بأي تحديث
+            }
+    
+            // إذا كانت الحالة الجديدة هي "Completed"
+            if ($data['status'] == 'Completed') {
+                // تغيير حالة المهمة إلى "Completed"
+                $task->status = 'Completed';
+                $task->save();
+    
+                // إيجاد المهام التي تعتمد على هذه المهمة
+                $dependent_tasks = Task_dependency::where('depends_id', '=', $task_id)->get();
+    
+                // تقليل عداد الاعتمادية وفتح المهام إذا انخفضت الاعتمادية إلى صفر
+                foreach ($dependent_tasks as $dependent_task) {
+                    $related_task = Task::where('id', '=', $dependent_task->task_id)->first();
+                    if ($related_task) { // تحقق من وجود المهمة المعتمدة
+                        $related_task->depends_on -= 1;
+    
+                        if ($related_task->depends_on == 0) {
+                            $related_task->status = 'Open';
+                        }
+    
+                        $related_task->save();
+                    }
+                }
+    
+            } elseif ($task->status == 'Completed' && $data['status'] == 'In progress') {
+                // إذا كانت المهمة مكتملة وتمت إعادتها إلى "In progress"
+                $task->status = 'In progress';
+                $task->save();
+    
+                // جلب المهام التي تعتمد على هذه المهمة
+                $dependent_tasks = Task_dependency::where('depends_id', '=', $task_id)->get();
+    
+                // زيادة عداد الاعتمادية وإعادة إغلاق المهام إذا كانت تعتمد على هذه المهمة
+                foreach ($dependent_tasks as $dependent_task) {
+                    $related_task = Task::where('id', '=', $dependent_task->task_id)->first();
+                    if ($related_task) { // تحقق من وجود المهمة المعتمدة
+                        $related_task->depends_on += 1;
+    
+                        if ($related_task->depends_on > 0) {
+                            $related_task->status = 'Blocked';
+                        }
+    
+                        $related_task->save();
+                    }
+                }
+            } else {
+                // لأي حالات أخرى (مثل In progress أو غيرها)
+                $task->status = $data['status'];
+                $task->save();
+            }
+    
+            return $task;
+    
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return $this->failed_Response($e->getMessage(), 400);
+        } catch (\Throwable $th) {
+            Log::error($th->getMessage());
+            return $this->failed_Response('Something went wrong with task status update', 400);
+        }
+    }
+       
 //========================================================================================================================
 }

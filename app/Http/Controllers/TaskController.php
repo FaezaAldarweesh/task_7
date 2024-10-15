@@ -10,6 +10,7 @@ use App\Http\Traits\ApiResponseTrait;
 use App\Http\Requests\Store_Task_Request;
 use App\Http\Resources\ViewTaskResources;
 use App\Http\Requests\Update_Task_Request;
+use App\Http\Requests\Update_Task_status_Request;
 
 class TaskController extends Controller
 {
@@ -100,7 +101,7 @@ class TaskController extends Controller
     public function all_trashed_tasks()
     {
         $tasks = $this->taskservices->all_trashed_task();
-        return $this->success_Response(taskResources::collection($tasks), "All trashed tasks fetched successfully", 200);
+        return $this->success_Response(TaskResources::collection($tasks), "All trashed tasks fetched successfully", 200);
     }
     //========================================================================================================================
     /**
@@ -133,6 +134,23 @@ class TaskController extends Controller
             return $delete;
         }
             return $this->success_Response(null, "task force deleted successfully", 200);
+    }
+        
+    //========================================================================================================================
+    /**
+     * method to
+     * @param   $task_id
+     * @return /Illuminate\Http\JsonResponse
+     */
+    public function update_status(Update_Task_status_Request $request,$task_id)
+    {
+        $update_status = $this->taskservices->update_status($request->validated(), $task_id);
+
+        // In case error messages are returned from the services section 
+        if ($update_status instanceof \Illuminate\Http\JsonResponse) {
+            return $update_status;
+        }
+            return $this->success_Response( new TaskResources($update_status), "updated status task successfully", 200);
     }
         
     //========================================================================================================================
