@@ -16,10 +16,9 @@ class TaskService {
      * @param   Request $request
      * @return /Illuminate\Http\JsonResponse if have an error
      */
-    public function get_all_Tasks(){
+    public function get_all_Tasks($type,$status,$assigned_to,$due_date,$priority,$depends_on){
         try {
-            $task = Task::all();
-            return $task;
+            return Task::filter($type,$status,$assigned_to,$due_date,$priority,$depends_on)->get();
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with fetche tasks', 400);}
     }
 //========================================================================================================================
@@ -297,5 +296,45 @@ class TaskService {
         }
     }
        
+//========================================================================================================================
+public function assign($data,$task_id) {
+    try {
+        $task = Task::find($task_id);
+        if (!$task) {
+            throw new \Exception('Task not found');
+        }
+        $task->assigned_to = $data['assigned_to'];
+        $task->save();
+
+        return $task;
+
+    } catch (\Throwable $th) {
+        Log::error($th->getMessage());
+        return $this->failed_Response('Something went wrong with assign the task', 400);
+    }
+}
+//========================================================================================================================
+public function update_reassign($data,$task_id) {
+    try {
+        $task = Task::find($task_id);
+        if (!$task) {
+            throw new \Exception('Task not found');
+        }
+        $task->assigned_to = $data['assigned_to'] ?? $task->assigned_to;
+        $task->save();
+
+        return $task;
+
+    } catch (\Throwable $th) {
+        Log::error($th->getMessage());
+        return $this->failed_Response('Something went wrong with reassign the task', 400);
+    }
+}
+//========================================================================================================================
+public function task_blocked(){
+    try {
+        return Task::where('status','=','Blocked')->get();
+    } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with fetche tasks', 400);}
+}
 //========================================================================================================================
 }

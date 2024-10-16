@@ -11,6 +11,8 @@ use App\Http\Requests\Store_Task_Request;
 use App\Http\Resources\ViewTaskResources;
 use App\Http\Requests\Update_Task_Request;
 use App\Http\Requests\Update_Task_status_Request;
+use App\Http\Requests\assign_Request;
+use App\Http\Requests\update_reassign_Request;
 
 class TaskController extends Controller
 {
@@ -34,7 +36,7 @@ class TaskController extends Controller
      */
     public function index(Request $request)
     {  
-        $tasks = $this->taskservices->get_all_Tasks();
+        $tasks = $this->taskservices->get_all_Tasks($request->input('type'),$request->input('status'),$request->input('assigned_to'),$request->input('due_date'),$request->input('priority'),$request->input('depends_on'));
         return $this->success_Response(TaskResources::collection($tasks), "All tasks fetched successfully", 200);
     }
     //===========================================================================================================================
@@ -154,4 +156,44 @@ class TaskController extends Controller
     }
         
     //========================================================================================================================
+        /**
+     * method to
+     * @param   $task_id
+     * @return /Illuminate\Http\JsonResponse
+     */
+    public function assign(assign_Request $request,$task_id)
+    {
+        $update_status = $this->taskservices->assign($request->validated(), $task_id);
+
+        // In case error messages are returned from the services section 
+        if ($update_status instanceof \Illuminate\Http\JsonResponse) {
+            return $update_status;
+        }
+            return $this->success_Response( new TaskResources($update_status), "assign task successfully", 200);
+    }
+        
+    //========================================================================================================================
+        /**
+     * method to
+     * @param   $task_id
+     * @return /Illuminate\Http\JsonResponse
+     */
+    public function update_reassign(update_reassign_Request $request,$task_id)
+    {
+        $update_status = $this->taskservices->update_reassign($request->validated(), $task_id);
+
+        // In case error messages are returned from the services section 
+        if ($update_status instanceof \Illuminate\Http\JsonResponse) {
+            return $update_status;
+        }
+            return $this->success_Response( new TaskResources($update_status), "updated assign task successfully", 200);
+    }
+        
+    //========================================================================================================================
+    public function task_blocked()
+    {  
+        $tasks = $this->taskservices->task_blocked();
+        return $this->success_Response(TaskResources::collection($tasks), "All task blocked fetched successfully", 200);
+    }
+    //===========================================================================================================================
 }

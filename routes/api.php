@@ -37,10 +37,9 @@ Route::group(['middleware' => ['auth:api']], function () {
     
     Route::apiResource('tasks', TaskController::class); 
     Route::put('update_status/{task_id}', [TaskController::class , 'update_status']);
-
-    Route::put('task_reassign/{task_id}' , [TaskController::class , 'update_reassign']);
     Route::put('task_assign/{task_id}' , [TaskController::class , 'assign']);
-
+    Route::put('task_reassign/{task_id}' , [TaskController::class , 'update_reassign']);
+    Route::get('task_blocked' , [TaskController::class , 'task_blocked']);
     Route::get('all_trashed_tasks', [TaskController::class, 'all_trashed_tasks']);
     Route::get('restore_task/{task_id}', [TaskController::class, 'restore']);
     Route::delete('forceDelete_task/{task_id}', [TaskController::class, 'forceDelete']);
