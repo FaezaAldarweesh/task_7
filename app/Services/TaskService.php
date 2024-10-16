@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\Task;
-use Illuminate\Support\Facades\Log;
-use App\Http\Traits\ApiResponseTrait;
+use App\Events\TaskEvent;
 use App\Models\Task_dependency;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\Request;
 
 class TaskService {
@@ -55,14 +57,16 @@ class TaskService {
                 }
             }
 
-            $task->save();
-
+        $task->save();
+            
             if ($data['depends_on'] != null) {
                 foreach ($data['depends_on'] as $depend) {
                     $depend_id = $depend['id'];
                     $task->Task_dependencies()->attach($depend_id);
                 }
             }
+
+           // event(new TaskEvent('Task', Auth::user()->name , 'create new task'));
 
             return $task;
 

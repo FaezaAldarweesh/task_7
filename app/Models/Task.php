@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use App\Events\TaskEvent;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Builder;
 
 
 class Task extends Model
@@ -78,4 +79,24 @@ class Task extends Model
         
         return $this->morphMany(Attachment::class,'attachmentable');
     }
+
+
+    // protected static function boot()
+    // {
+    //     parent::boot();
+
+    //     static::created(function ($model) {
+    //         // إطلاق الحدث عند إضافة نموذج جديد
+    //     });
+
+    //     static::updated(function ($model) {
+    //         // إطلاق الحدث عند تحديث نموذج
+    //         event(new TaskEvent('updated', $model));
+    //     });
+
+    //     static::deleted(function ($model) {
+    //         // إطلاق الحدث عند حذف نموذج
+    //         event(new TaskEvent('deleted', $model));
+    //     });
+    // }
 }
