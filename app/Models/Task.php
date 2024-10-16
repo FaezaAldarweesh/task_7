@@ -14,6 +14,7 @@ class Task extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = [
         'title',
+        'created_by',
         'description',
         'type',
         'status',
@@ -80,23 +81,9 @@ class Task extends Model
         return $this->morphMany(Attachment::class,'attachmentable');
     }
 
+    public function TaskStatusUpdates(){
 
-    // protected static function boot()
-    // {
-    //     parent::boot();
+        return $this->hasMany(TaskStatusUpdate::class);
+    }
 
-    //     static::created(function ($model) {
-    //         // إطلاق الحدث عند إضافة نموذج جديد
-    //     });
-
-    //     static::updated(function ($model) {
-    //         // إطلاق الحدث عند تحديث نموذج
-    //         event(new TaskEvent('updated', $model));
-    //     });
-
-    //     static::deleted(function ($model) {
-    //         // إطلاق الحدث عند حذف نموذج
-    //         event(new TaskEvent('deleted', $model));
-    //     });
-    // }
 }

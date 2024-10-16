@@ -13,9 +13,11 @@ return new class extends Migration
     {
         Schema::create('task_status_updates', function (Blueprint $table) {
             $table->id();
-            $table->string('model');
-            $table->unsignedBigInteger('user');
-            $table->string('log');
+            $table->string('action');
+            $table->string('model_name');
+            $table->foreignId('task_id')->constrained('tasks');
+            $table->foreignId('coused_by')->constrained('users');
+            $table->json('descreption');
             $table->timestamps();
         });
     }

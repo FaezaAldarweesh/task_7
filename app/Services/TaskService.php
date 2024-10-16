@@ -5,14 +5,16 @@ namespace App\Services;
 use App\Models\Task;
 use App\Events\TaskEvent;
 use App\Models\Task_dependency;
+use App\Models\TaskStatusUpdate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Traits\ApiResponseTrait;
+use App\Http\Traits\ModelActionsTrait;
 use Illuminate\Support\Facades\Request;
 
 class TaskService {
     //trait customize the methods for successful , failed , authentecation responses.
-    use ApiResponseTrait;
+    use ApiResponseTrait,ModelActionsTrait;
     /**
      * method to view all tasks 
      * @param   Request $request
@@ -57,7 +59,7 @@ class TaskService {
                 }
             }
 
-        $task->save();
+            $task->save();
             
             if ($data['depends_on'] != null) {
                 foreach ($data['depends_on'] as $depend) {
@@ -65,8 +67,8 @@ class TaskService {
                     $task->Task_dependencies()->attach($depend_id);
                 }
             }
-
-           // event(new TaskEvent('Task', Auth::user()->name , 'create new task'));
+            
+           $this->model('create','Task',$task->id, Auth::id(), $task);
 
             return $task;
 
@@ -116,7 +118,9 @@ class TaskService {
                 $depend_ids = collect($data['depends_on'])->pluck('id')->toArray(); 
                 $task->Task_dependencies()->sync($depend_ids);
             }
-            
+
+           $this->model('Update','Task',$task->id, Auth::id(), $task);
+
             return $task;
 
         }catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with view task', 400);}
@@ -156,6 +160,7 @@ class TaskService {
             foreach($task_dependancies as $task_dependancy){
                 $task_dependancy->delete();
             }
+
 
             return true;
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);
@@ -288,6 +293,9 @@ class TaskService {
                 $task->status = $data['status'];
                 $task->save();
             }
+
+           $this->model('Update status','Task',$task->id, Auth::id(), $task);
+           $this->model('Update status of related task','Task',$related_task->id, Auth::id(), $related_task);
     
             return $task;
     
@@ -310,6 +318,8 @@ public function assign($data,$task_id) {
         $task->assigned_to = $data['assigned_to'];
         $task->save();
 
+        $this->model('assign status','Task',$task->id, Auth::id(), $task);
+
         return $task;
 
     } catch (\Throwable $th) {
@@ -326,6 +336,8 @@ public function update_reassign($data,$task_id) {
         }
         $task->assigned_to = $data['assigned_to'] ?? $task->assigned_to;
         $task->save();
+
+        $this->model('reassign status','Task',$task->id, Auth::id(), $task);
 
         return $task;
 

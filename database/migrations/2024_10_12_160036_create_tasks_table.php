@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table->foreignId('created_by')->nullable()->constrained('users')->cascadeOnDelete();
             $table->text('description');
             $table->enum('type',['Bug','Feature','Improvment']);
             $table->enum('status',['Open','In progress','Completed','Blocked']);  

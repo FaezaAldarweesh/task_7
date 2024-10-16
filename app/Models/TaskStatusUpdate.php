@@ -9,8 +9,15 @@ class TaskStatusUpdate extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'model',
-        'user',
-        'log',
+        'action',
+        'model_name',
+        'task_id',
+        'coused_by',
+        'descreption',
     ];
+
+    public function Task(){
+
+        return $this->belongsTo(Task::class);
+    }
 }
