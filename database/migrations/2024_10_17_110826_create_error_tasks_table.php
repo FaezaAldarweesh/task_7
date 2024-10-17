@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('task_status_updates', function (Blueprint $table) {
+        Schema::create('error_tasks', function (Blueprint $table) {
             $table->id();
             $table->string('action');
             $table->string('model_name');
-            $table->foreignId('task_id')->constrained('tasks')->cascadeOnDelete();
+            $table->foreignId('task_id')->nullable()->constrained('tasks')->cascadeOnDelete();
             $table->foreignId('coused_by')->constrained('users')->cascadeOnDelete();
             $table->json('descreption')->nullable();
+            $table->text('message');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('task_status_updates');
+        Schema::dropIfExists('error_tasks');
     }
 };

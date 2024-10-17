@@ -79,7 +79,12 @@ class TaskController extends Controller
     public function update(Update_Task_Request $request, Task $task)
     {
         $task = $this->taskservices->update_Task($request->validated(), $task);
-        return $this->success_Response(new TaskResources($task), "Task updated successfully", 200);
+
+         // In case error messages are returned from the services section 
+         if ($task instanceof \Illuminate\Http\JsonResponse) {
+            return $task;
+        }
+            return $this->success_Response(new TaskResources($task), "Task updated successfully", 200);
     }
     //===========================================================================================================================
     /**

@@ -22,7 +22,7 @@ class ViewTaskResources extends JsonResource
             'task status' => $this->status,
             'task priority' => $this->priority, 
             'task due date' => $this->due_date, 
-            'task assigned to' => $this->user->name, 
+            'task assigned to' => $this->user->name ?? "have not assigned to employee yet", 
             'task dependencies on' => ($this->depends_on == 0) ? 'it does not have dependeny' : 'it have dependeny', 
             'task dependency ' => TaskDependencyResource::collection($this->whenLoaded('Task_dependencies')),
             'task comment ' => CommentResources::collection($this->whenLoaded('comments')),

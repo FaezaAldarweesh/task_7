@@ -80,7 +80,9 @@ class Store_Task_Request extends FormRequest
             'date' => 'يجب أن يكون الحقل :attribute تاريخاً',
             'after_or_equal' => 'يجب أن بكون :attribute بتاريخ اليوم و ما بعد',
             'integer' => 'يجب أن يكون الحقل :attribute من نمط int',
-            'exists' => 'يجب أن يكون :attribute موجودا مسبقا',
+            'assigned_to.exists' => 'يجب أن يكون :attribute موجودا مسبقا',
+            'depends_on.*.id.exists' => 'يجب أن يكون :attribute موجودا مسبقا',
+            'array' => 'يجب أن يكون الحقل :attribute من نمط array',
         ];
     }
 }

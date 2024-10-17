@@ -4,21 +4,24 @@ namespace App\Services;
 
 use App\Models\Task;
 use App\Models\Comment;
-use App\Events\TaskEvent;
+use App\Models\ErrorTask;
+use App\Models\Attachment;
 use App\Models\Task_dependency;
 use App\Models\TaskStatusUpdate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Traits\ApiResponseTrait;
 use App\Http\Traits\ModelActionsTrait;
-use App\Models\Attachment;
 use Illuminate\Support\Facades\Request;
 
 class TaskService {
-    //trait customize the methods for successful , failed , authentecation responses.
+     /**
+     * ApiResponseTrait: trait customize the methods for successful , failed , authentecation responses.
+     * ModelActionsTrait: trait customize the method model to stor all life cycle of task and all Error messages.
+     */
     use ApiResponseTrait,ModelActionsTrait;
     /**
-     * method to view all tasks 
+     * method to view all tasks with a filtes on (type,status,assigned_to,due_date,priority,depends_on)
      * @param   Request $request
      * @return /Illuminate\Http\JsonResponse if have an error
      */
@@ -30,11 +33,13 @@ class TaskService {
 //========================================================================================================================
     /**
      * method to store a new task
-     * @param   $data
-     * @return \Illuminate\Http\JsonResponse
+     * @param   $dtat
+     * @return /Illuminate\Http\JsonResponse
      */
     public function create_Task($data) {
         try {
+
+            //create new task
             $task = new Task();
             $task->title = $data['title'];
             $task->description = $data['description'];
@@ -43,19 +48,28 @@ class TaskService {
             $task->due_date = $data['due_date'];
             $task->assigned_to = $data['assigned_to'] ?? null;
 
+            //هنا ستتم معالجة حالة التاسك عند إضافته (إما أن يكون مفتوح للعمل أو مغلق بسبب اعتماده على تاسك سابق)
+            //سنناقش في حال كانت مصفوفة التاسكات المعتمد عليها فارغة أو لا
+
             if ($data['depends_on'] == null) {
+                //في حال كانت فارغة هذا يعني أنه لا يعتمد على تاسم قبله لبدأ العمل فيه و ستكون حالته مفتوح للعمل + مع الإشارة إلى أن عداد الاعتمادية سيكون صفر
                 $task->status = 'Open';
                 $task->depends_on = 0;
+            //في حال أن مصفوفة الاعتمادية لم تكت فارغة
             } else {
+                //سيتم تخزين عدد التاسكات المعتمد عليها في عداد الاعتمادية
                 $task->depends_on = count($data['depends_on']);
                 foreach ($data['depends_on'] as $depend) {
+                    //من ثم سنقوم بالمشي على المصفوفة التاسكات المعتمد عليها و التحقق من حالتهم
                     $depend_id = $depend['id'];
                     $check_status_task = Task::select('id', 'status')->where('id', '=', $depend_id)->first();
-
+                     //في حال إيجاد تاسك واحد فقط معتمد عليه حالته هي غير مكتمل
                     if ($check_status_task && $check_status_task->status != 'Completed') {
+                        //سيتم إضافة حالة التاسك على أنه مغلق لوجود تاسك معتمد عليه حالته لا تزال غير مكتملة و من ثم
                         $task->status = 'Blocked';
                         break;
                     } else {
+                        //و إلا في حال أنه صادف أي تاسك معتمد عليه حالته مكتمل ستكون حالة التاسك مفتوحة
                         $task->status = 'Open';
                     }
                 }
@@ -63,6 +77,7 @@ class TaskService {
 
             $task->save();
             
+            //تخزين التاسكات المعتمد عليها من خلال علاقة ال many to many
             if ($data['depends_on'] != null) {
                 foreach ($data['depends_on'] as $depend) {
                     $depend_id = $depend['id'];
@@ -70,6 +85,7 @@ class TaskService {
                 }
             }
             
+            //إضافة سجل عملية تخزين تاسك إلى جدول TaskStatusUpdates
            $this->model('create','Task',$task->id, Auth::id(), $task);
 
             return $task;
@@ -84,11 +100,22 @@ class TaskService {
      * method to update task alraedy exist
      * @param  $data
      * @param  Task $task
-     * @return /Illuminate\Http\JsonResponse if have an error
+     * @return /Illuminate\Http\JsonResponse
      */
     public function update_task($data,Task $task){
         try {  
 
+            //في حال التعديل على معلومات تاسك منتهي يتم إعادة رسالة خطأ
+            if($task->status == 'Completed'){
+
+                $message = 'you can not update on task that Completed befor , you can only update task that still (Blocked , Open , In progress) , if you want to do that, update on status of the task first';
+                
+                //إضافة سجل خطأ إلى جدول ErrorTask
+                $this->error('update','Task',$task->id, Auth::id(), $task ,$message);
+                throw new \Exception($message);
+            }
+
+            //التعديل على معلومات التاسك في حال وجود تعديل عليها
             $task->title = $data['title'] ?? $task->title;
             $task->description = $data['description'] ?? $task->description;
             $task->type = $data['type'] ?? $task->type;
@@ -96,9 +123,14 @@ class TaskService {
             $task->due_date = $data['due_date'] ?? $task->due_date;
             $task->assigned_to = $data['assigned_to'] ?? $task->assigned_to;
 
+            //مناقشة حالة التاسك بالضبط مثل عملية الإضافة من الأجل التحقق من حالات التاسكات المعتمد عليها و من ثم الإقرار بحالة التاسك المعدل عليه
             if ($data['depends_on'] == null) {
                 $task->status = 'Open';
                 $task->depends_on = 0;
+                if ($data['depends_on'] == null) { 
+                    //هنا في حال تم التعديل على تاسك ليصبح غير معتمد على تاسك أخر ,, نقوم بفك الربط بينها في جدول ال pivot
+                    $task->Task_dependencies()->detach();
+                }
             } else {
                 $task->depends_on = count($data['depends_on']);
                 foreach ($data['depends_on'] as $depend) {
@@ -116,16 +148,19 @@ class TaskService {
 
             $task->save();
 
+            //في حال التعديل على التاسكات المعتمد عليها 
             if ($data['depends_on'] != null) { 
                 $depend_ids = collect($data['depends_on'])->pluck('id')->toArray(); 
                 $task->Task_dependencies()->sync($depend_ids);
             }
 
+           //إضافة سجل عملية تعديل على التاسك إلى جدول TaskStatusUpdates
            $this->model('Update','Task',$task->id, Auth::id(), $task);
 
             return $task;
-
-        }catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with view task', 400);}
+            
+        } catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 404);
+        }catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with update task', 400);}
     }
 //========================================================================================================================
     /**
@@ -135,18 +170,23 @@ class TaskService {
      */
     public function view_Task($task_id) {
         try {    
-            $task = Task::find($task_id)->load('Task_dependencies')->load('comments')->load('attachments');
-            if(!$task){
+            $task = Task::find($task_id);
+
+            if(!$task){                
+                //إضافة سجل خطأ إلى جدول ErrorTask
+                $this->error('update','Task',null, Auth::id(), null ,'task not found');
                 throw new \Exception('task not found');
+            }else{
+                $task->load('Task_dependencies', 'comments', 'attachments');
+                return $task;
             }
-            return $task;
         } catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 404);
-        } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with update task', 400);}
+        } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with view task', 400);}
     }
 //========================================================================================================================
     /**
      * method to soft delete task alraedy exist
-     * @param  Task $task
+     * @param  $task_id
      * @return /Illuminate\Http\JsonResponse if have an error
      */
     public function delete_task($task_id)
@@ -154,31 +194,27 @@ class TaskService {
         try {  
             $task = Task::find($task_id);
             if(!$task){
+                //إضافة سجل خطأ إلى جدول ErrorTask
+                $this->error('soft delte','Task',null, Auth::id(), null ,'task not found');
                 throw new \Exception('task not found');
             }
 
-            $task_dependancies = Task_dependency::where('task_id',$task_id)->get();
-            $task_comments = Comment::where('commentable_id',$task_id)->get();
-            $task_attachments = Attachment::where('attachmentable_id',$task_id)->get();
-            $task_Life_cycles = TaskStatusUpdate::where('task_id',$task_id)->get();
+            //حذف حميع السجلات المتعلقة بالتاسك في جميع الجداول
+            Task_dependency::where('task_id', $task_id)->delete();
 
-            foreach($task_dependancies as $task_dependancy){
-                $task_dependancy->delete();
-            }
+            Comment::where('commentable_id', $task_id)->delete();
             
-            foreach($task_comments as $task_comment){
-                $task_comment->delete();
-            }
+            Attachment::where('attachmentable_id', $task_id)->delete();
             
-            foreach($task_attachments as $task_attachment){
-                $task_attachment->delete();
-            }
+            TaskStatusUpdate::where('task_id', $task_id)->delete();
             
-            foreach($task_Life_cycles as $task_Life_cycle){
-                $task_Life_cycle->delete();
-            }
+            ErrorTask::where('task_id', $task_id)->delete();
             
             $task->delete();
+
+            //تسجيل عملية الحذف المؤقت
+           $this->model('soft delete','Task',$task_id, Auth::id(), null);
+
             return true;
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with deleting task', 400);}
@@ -206,28 +242,22 @@ class TaskService {
         try {
             $task = Task::withTrashed()->find($task_id);
             if(!$task){
+                //إضافة سجل خطأ إلى جدول ErrorTask
+                $this->error('restore','Task',null, Auth::id(), null ,'task not found');
                 throw new \Exception('task not found');
             }
-            $task_dependancies = Task_dependency::withTrashed()->where('task_id',$task_id)->get();
-            $task_comments = Comment::withTrashed()->where('commentable_id',$task_id)->get();
-            $task_attachments = Attachment::withTrashed()->where('attachmentable_id',$task_id)->get();
-            $task_Life_cycles = TaskStatusUpdate::withTrashed()->where('task_id',$task_id)->get();
+            Task_dependency::where('task_id', $task_id)->restore();
 
-            foreach($task_dependancies as $task_dependancy){
-                $task_dependancy->restore();
-            }
+            Comment::where('commentable_id', $task_id)->restore();
+            
+            Attachment::where('attachmentable_id', $task_id)->restore();
+            
+            TaskStatusUpdate::where('task_id', $task_id)->restore();
+            
+            ErrorTask::where('task_id', $task_id)->restore();
 
-            foreach($task_comments as $task_comment){
-                $task_comment->restore();
-            }
-
-            foreach($task_attachments as $task_attachment){
-                $task_attachment->restore();
-            }
-
-            foreach($task_Life_cycles as $task_Life_cycle){
-                $task_Life_cycle->restore();
-            }
+            //تسجيل عملية الاستعادة
+            $this->model('restore','Task',$task_id, Auth::id(), null);
 
             return $task->restore();
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);   
@@ -245,66 +275,48 @@ class TaskService {
         try {
             $task = Task::onlyTrashed()->find($task_id);
             if(!$task){
+                //إضافة سجل خطأ إلى جدول ErrorTask
+                $this->error('delete','Task',null, Auth::id(), null ,'task not found');
                 throw new \Exception('task not found');
             }
-            $task_dependancies = Task_dependency::onlyTrashed()->where('task_id',$task_id)->get();
-            $task_comments = Comment::onlyTrashed()->where('commentable_id',$task_id)->get();
-            $task_attachments = Attachment::onlyTrashed()->where('attachmentable_id',$task_id)->get();
-            $task_Life_cycles = TaskStatusUpdate::onlyTrashed()->where('task_id',$task_id)->get();
-
-
+            
             $task->forceDelete();
-
-            foreach($task_dependancies as $task_dependancy){
-                $task_dependancy->forceDelete();
-            }
-
-            foreach($task_comments as $task_comment){
-                $task_comment->forceDelete();
-            }
-
-            foreach($task_attachments as $task_attachment){
-                $task_attachment->forceDelete();
-            }
-
-            foreach($task_Life_cycles as $task_Life_cycle){
-                $task_Life_cycle->forceDelete();
-            }
-
+            
             return true;
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);   
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with deleting task', 400);}
     }
 //========================================================================================================================
     /**
-     * method to 
+     * method to update status
+     * @param   $data
      * @param   $task_id
      * @return /Illuminate\Http\JsonResponse if have an error
      */
     public function update_status($data, $task_id)
     {
         try {
-            // إيجاد المهمة المراد تحديث حالتها
             $task = Task::find($task_id);
             if (!$task) {
-                throw new \Exception('Task not found');
+                //إضافة سجل خطأ إلى جدول ErrorTask
+                $this->error('update status', 'Task', null, Auth::id(), null, 'task not found');
+                throw new \Exception('task not found');
             }
     
-            // تحقق مما إذا كانت الحالة الجديدة هي نفسها الحالة القديمة
+            // التحقق فيما إذا كانت الحالة القديمة تساوي الحالة الجديدة التي وصلت , في حال كان نفسها لا يتم التغير أبدا في حالات التاسكات المتعلقة به
             if ($task->status === $data['status']) {
-                return $task; // لا تقم بأي تحديث
+                return $task;
             }
     
             // إذا كانت الحالة الجديدة هي "Completed"
             if ($data['status'] == 'Completed') {
-                // تغيير حالة المهمة إلى "Completed"
                 $task->status = 'Completed';
                 $task->save();
     
-                // إيجاد المهام التي تعتمد على هذه المهمة
+                // إعادة المهام التي تعتمد على هذه المهمة
                 $dependent_tasks = Task_dependency::where('depends_id', '=', $task_id)->get();
     
-                // تقليل عداد الاعتمادية وفتح المهام إذا انخفضت الاعتمادية إلى صفر
+                // تقليل عداد الاعتمادية وفتح المهمة المتعلقة بالتاسك إذا انخفضت الاعتمادية إلى صفر
                 foreach ($dependent_tasks as $dependent_task) {
                     $related_task = Task::where('id', '=', $dependent_task->task_id)->first();
                     if ($related_task) { // تحقق من وجود المهمة المعتمدة
@@ -315,11 +327,14 @@ class TaskService {
                         }
     
                         $related_task->save();
+    
+                        // تسجيل تحديث حالة المهمة المعتمدة
+                        $this->model('Update status of related task', 'Task', $related_task->id, Auth::id(), $related_task);
                     }
                 }
     
+            //في حال كانت حالة التاسك هي مكتمل و تم إعادتها إلى حالة العمل
             } elseif ($task->status == 'Completed' && $data['status'] == 'In progress') {
-                // إذا كانت المهمة مكتملة وتمت إعادتها إلى "In progress"
                 $task->status = 'In progress';
                 $task->save();
     
@@ -337,71 +352,84 @@ class TaskService {
                         }
     
                         $related_task->save();
+    
+                        // تسجيل تحديث حالة المهمة المعتمدة
+                        $this->model('Update status of related task', 'Task', $related_task->id, Auth::id(), $related_task);
                     }
                 }
             } else {
-                // لأي حالات أخرى (مثل In progress أو غيرها)
+                // لأي حالات أخرى
                 $task->status = $data['status'];
                 $task->save();
             }
-
-           $this->model('Update status','Task',$task->id, Auth::id(), $task);
-           $this->model('Update status of related task','Task',$related_task->id, Auth::id(), $related_task);
+    
+            // تسجيل تحديث حالة المهمة الأصلية
+            $this->model('Update status', 'Task', $task->id, Auth::id(), $task);
     
             return $task;
     
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return $this->failed_Response($e->getMessage(), 400);
-        } catch (\Throwable $th) {
-            Log::error($th->getMessage());
-            return $this->failed_Response('Something went wrong with task status update', 400);
-        }
-    }
-       
+        } catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);
+        } catch (\Throwable $th) { Log::error($th->getMessage());  return $this->failed_Response('Something went wrong with task status update', 400);}
+    } 
 //========================================================================================================================
-public function assign($data,$task_id) {
-    try {
-        $task = Task::find($task_id);
-        if (!$task) {
-            throw new \Exception('Task not found');
-        }
-        $task->assigned_to = $data['assigned_to'];
-        $task->save();
+    /**
+     * method to assign task to employee
+     * @param   $data
+     * @param   $task_id
+     * @return /Illuminate\Http\JsonResponse
+     */
+    public function assign($data,$task_id) {
+        try {
+            $task = Task::find($task_id);
+            if (!$task) {
+                //إضافة سجل خطأ إلى جدول ErrorTask
+                $this->error('update ststus','Task',null, Auth::id(), null ,'task not found');
+                throw new \Exception('task not found');
+            }
+            $task->assigned_to = $data['assigned_to'];
+            $task->save();
 
-        $this->model('assign status','Task',$task->id, Auth::id(), $task);
+            $this->model('assign status','Task',$task->id, Auth::id(), $task);
 
-        return $task;
+            return $task;
 
-    } catch (\Throwable $th) {
-        Log::error($th->getMessage());
-        return $this->failed_Response('Something went wrong with assign the task', 400);
+        } catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);
+        } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with assign the task', 400);}
     }
-}
 //========================================================================================================================
-public function update_reassign($data,$task_id) {
-    try {
-        $task = Task::find($task_id);
-        if (!$task) {
-            throw new \Exception('Task not found');
-        }
-        $task->assigned_to = $data['assigned_to'] ?? $task->assigned_to;
-        $task->save();
+    /**
+     * method to reassign task to employee
+     * @param   $task_id
+     * @param   $data
+     * @return /Illuminate\Http\JsonResponse
+     */
+    public function update_reassign($data,$task_id) {
+        try {
+            $task = Task::find($task_id);
+            if (!$task) {
+                //إضافة سجل خطأ إلى جدول ErrorTask
+                $this->error('update ststus','Task',null, Auth::id(), null ,'task not found');
+                throw new \Exception('task not found');
+            }
+            $task->assigned_to = $data['assigned_to'] ?? $task->assigned_to;
+            $task->save();
 
-        $this->model('reassign status','Task',$task->id, Auth::id(), $task);
+            $this->model('reassign status','Task',$task->id, Auth::id(), $task);
 
-        return $task;
+            return $task;
 
-    } catch (\Throwable $th) {
-        Log::error($th->getMessage());
-        return $this->failed_Response('Something went wrong with reassign the task', 400);
+        } catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);
+        } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with reassign the task', 400);}
     }
-}
 //========================================================================================================================
-public function task_blocked(){
-    try {
-        return Task::where('status','=','Blocked')->get();
-    } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with fetche tasks', 400);}
-}
+    /**
+     * method to get all blocked tasks
+     * @return /Illuminate\Http\JsonResponse
+     */
+    public function task_blocked(){
+        try {
+            return Task::where('status','=','Blocked')->get();
+        } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with fetche tasks', 400);}
+    }
 //========================================================================================================================
 }
