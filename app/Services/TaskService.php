@@ -383,7 +383,7 @@ class TaskService {
             $task = Task::find($task_id);
             if (!$task) {
                 //إضافة سجل خطأ إلى جدول ErrorTask
-                $this->error('update ststus','Task',null, Auth::id(), null ,'task not found');
+                $this->error('update assign','Task',null, Auth::id(), null ,'task not found');
                 throw new \Exception('task not found');
             }
             $task->assigned_to = $data['assigned_to'];
@@ -408,7 +408,7 @@ class TaskService {
             $task = Task::find($task_id);
             if (!$task) {
                 //إضافة سجل خطأ إلى جدول ErrorTask
-                $this->error('update ststus','Task',null, Auth::id(), null ,'task not found');
+                $this->error('update reassign','Task',null, Auth::id(), null ,'task not found');
                 throw new \Exception('task not found');
             }
             $task->assigned_to = $data['assigned_to'] ?? $task->assigned_to;

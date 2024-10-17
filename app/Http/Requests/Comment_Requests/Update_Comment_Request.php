@@ -26,7 +26,7 @@ class Update_Comment_Request extends FormRequest
     public function rules(): array
     {
         return [            
-            'comment' => 'sometimes|nullable|string|min:20|max:255',
+            'comment' => 'sometimes|nullable|string|min:2|max:255',
         ];
     }
     //===========================================================================================================================
@@ -57,7 +57,7 @@ class Update_Comment_Request extends FormRequest
     {
         return [
             'string' => 'يحب أن يكون الحقل :attribute يحوي محارف',
-            'min' => 'الحد الأدنى لطول :attribute على الأقل هو 4 حرف',
+            'min' => 'الحد الأدنى لطول :attribute على الأقل هو 2 حرف',
             'max' => 'الحد الأقصى لطول  :attribute هو 50 حرف',
         ];
     }

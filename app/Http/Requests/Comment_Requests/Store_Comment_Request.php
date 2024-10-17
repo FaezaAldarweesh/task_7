@@ -25,7 +25,7 @@ class Store_Comment_Request extends FormRequest
     public function rules(): array
     {
         return [
-            'comment' => 'required|string|min:4|max:255',
+            'comment' => 'required|string|min:2|max:255',
         ];
     }
     //===========================================================================================================================
@@ -57,7 +57,7 @@ class Store_Comment_Request extends FormRequest
         return [
             'required' => ' :attribute مطلوب',
             'string' => 'يحب أن يكون الحقل :attribute يحوي محارف',
-            'min' => 'الحد الأدنى لطول :attribute على الأقل هو 4 حرف',
+            'min' => 'الحد الأدنى لطول :attribute على الأقل هو 2 حرف',
             'max' => 'الحد الأقصى لطول  :attribute هو 50 حرف',
         ];
     }

@@ -26,11 +26,10 @@ class AttachmentController extends Controller
     //===========================================================================================================================
     /**
      * method to view all attachments
-     * @param   Request $request
      * @return /Illuminate\Http\JsonResponse
      * AttachmentResources to customize the return responses.
      */
-    public function index(Request $request)
+    public function index()
     {  
         $attachments = $this->attachmentservices->get_all_Attachments();
         return $this->success_Response(AttachmentResources::collection($attachments), "All attachments fetched successfully", 200);
@@ -39,12 +38,17 @@ class AttachmentController extends Controller
     /**
      * method to store a new attachment
      * @param   Store_Attachment_Request $request
+     * @param   $task_id
      * @return /Illuminate\Http\JsonResponse
      */
     public function store(Store_Attachment_Request $request,$task_id)
     {
         $attachment = $this->attachmentservices->create_Attachment($request->validated(),$task_id);
-        return $this->success_Response(new AttachmentResources($attachment), "Attachment created successfully.", 201);
+        // In case error messages are returned from the services section 
+        if ($attachment instanceof \Illuminate\Http\JsonResponse) {
+            return $attachment;
+        }
+            return $this->success_Response(new AttachmentResources($attachment), "Attachment created successfully.", 201);
     }
     
     //===========================================================================================================================

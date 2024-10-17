@@ -9,17 +9,19 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Traits\ApiResponseTrait;
+use App\Http\Traits\ModelActionsTrait;
 use Illuminate\Support\Facades\Storage;
-use App\Http\Resources\AttachmentResources;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class AttachmentService {
 
-    //trait customize the methods for successful , failed , authentecation responses.
-    use ApiResponseTrait;
+     /**
+     * ApiResponseTrait: trait customize the methods for successful , failed , authentecation responses.
+     * ModelActionsTrait: trait customize the method model to stor all life cycle of task and all Error messages.
+     */
+    use ApiResponseTrait,ModelActionsTrait;
     /**
      * method to view all attachments 
-     * @param   Request $request
      * @return /Illuminate\Http\JsonResponse if have an error
      */
     public function get_all_Attachments(){
@@ -32,6 +34,7 @@ class AttachmentService {
     /**
      * method to store a new attachment
      * @param   $data
+     * @param   $task_id
      * @return \Illuminate\Http\JsonResponse
      */
     public function create_Attachment($data,$task_id) {
@@ -41,12 +44,16 @@ class AttachmentService {
             
             // Ensure the file extension is valid and there is no path traversal in the file name
             if (preg_match('/\.[^.]+\./', $originalName)) {
+                //إضافة سجل خطأ إلى جدول ErrorTask
+                $this->error('create Attachment','Attachment',null, Auth::id(), null ,trans('general.notAllowedAction'));
                 throw new Exception(trans('general.notAllowedAction'), 403);
             }
             
             
             // Check for path traversal attack (e.g., using ../ or ..\ or / to go up directories)
             if (strpos($originalName, '..') !== false || strpos($originalName, '/') !== false || strpos($originalName, '\\') !== false) {
+                //إضافة سجل خطأ إلى جدول ErrorTask                
+                $this->error('create Attachment','Attachment',null, Auth::id(), null ,trans('general.pathTraversalDetected'));
                 throw new Exception(trans('general.pathTraversalDetected'), 403);
             }
             
@@ -56,6 +63,8 @@ class AttachmentService {
           //  dd($mime_type);
             
             if (!in_array($mime_type, $allowedMimeTypes)) {
+                //إضافة سجل خطأ إلى جدول ErrorTask
+                $this->error('create Attachment','Attachment',null, Auth::id(), null ,trans('general.invalidFileType'));
                 throw new FileException(trans('general.invalidFileType'), 403);
             }
             
@@ -75,6 +84,8 @@ class AttachmentService {
                 'created_by' => Auth::id(),
                 'name' => $fileName
             ]);
+
+            $this->model('create Attachment', 'Attachment', $task_id, Auth::id(), $file);
 
             return $file;
         } catch (\Throwable $th) {

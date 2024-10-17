@@ -27,11 +27,10 @@ class CommentController extends Controller
     //===========================================================================================================================
     /**
      * method to view all comments
-     * @param   Request $request
      * @return /Illuminate\Http\JsonResponse
      * CommentResources to customize the return responses.
      */
-    public function index(Request $request)
+    public function index()
     {  
         $comments = $this->commentservices->get_all_Comments();
         return $this->success_Response(CommentResources::collection($comments), "All comments fetched successfully", 200);
@@ -40,19 +39,24 @@ class CommentController extends Controller
     /**
      * method to store a new comment
      * @param   Store_Comment_Request $request
+     * @param   $id
      * @return /Illuminate\Http\JsonResponse
      */
     public function store(Store_Comment_Request $request,$id)
     {
         $comment = $this->commentservices->create_Comment($request->validated(),$id);
-        return $this->success_Response(new CommentResources($comment), "Comment created successfully.", 201);
+        // In case error messages are returned from the services section 
+        if ($comment instanceof \Illuminate\Http\JsonResponse) {
+            return $comment;
+        }
+            return $this->success_Response(new CommentResources($comment), "Comment created successfully.", 201);
     }
     
     //===========================================================================================================================
     /**
      * method to update comment alraedy exist
      * @param  Update_Comment_Request $request
-     * @param  Comment $comment
+     * @param  $comment_id
      * @return /Illuminate\Http\JsonResponse
      */
     public function update(Update_Comment_Request $request, $comment_id)
