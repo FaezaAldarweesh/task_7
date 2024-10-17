@@ -23,5 +23,6 @@ class AdminSeeder extends Seeder
             'password' => '11223344',
             'role' => 'admin',
         ]);
+
     }
 }

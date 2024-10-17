@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Events\TaskEvent;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -23,6 +24,14 @@ class Task extends Model
         'assigned_to',
         'depends_on',
     ];
+
+     protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($task) {
+            $task->created_by = Auth::user()->id;
+        });
+    }
 
     public function scopeFilter(Builder $query, $type, $status, $assigned_to, $due_date, $priority, $depends_on)
     {

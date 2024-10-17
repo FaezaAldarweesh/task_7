@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Log;
 use App\Http\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\Request;

@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\AttachmentController;
 
 /*
@@ -55,4 +56,7 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::put('update_Attachment/{Attachment_id}', [AttachmentController::class,'update']); 
     Route::get('all_Attachment', [AttachmentController::class,'index']); 
     Route::delete('delete_Attachment/{Attachment_id}', [AttachmentController::class,'destroy']); 
+
+    //Route::apiResource('role',RoleController::class); 
+
 });
