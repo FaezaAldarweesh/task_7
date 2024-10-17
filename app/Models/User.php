@@ -68,6 +68,11 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
+    /**
+     * Return a all users with filter on role.
+     * @param   $role
+     * @return array
+     */
     public function scopeFilter(Builder $query, $role)
     {
         if ($role !== null) {
@@ -76,16 +81,28 @@ class User extends Authenticatable implements JWTSubject
         return $query;
     }
 
+    /**
+     * Returns all tasks assigned to the current user, with potential filtering based on the user's role.
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function Tasks(){
 
         return $this->hasMany(Task::class,'assigned_to','id');
     }
 
+    /**
+     * Returns all tasks assigned to the current Comments.
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function Comments(){
 
         return $this->hasMany(Comment::class);
     }
 
+    /**
+     * Returns all tasks assigned to the current Attachments.
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function Attachments(){
 
         return $this->hasMany(Attachment::class);

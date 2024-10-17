@@ -21,12 +21,13 @@ class UserController extends Controller
      */
     public function __construct(UserService $userservices)
     {
+        //security middleware
         $this->middleware('security');
         $this->userservices = $userservices;
     }
     //===========================================================================================================================
     /**
-     * method to view all users
+     * method to view all users with a filter on role
      * @param   Request $request
      * @return /Illuminate\Http\JsonResponse
      * UserResources to customize the return responses.
@@ -94,7 +95,7 @@ class UserController extends Controller
     }
     //========================================================================================================================
     /**
-     * method to return all soft delete users
+     * method to return all soft deleted users
      * @return /Illuminate\Http\JsonResponse if have an error
      */
     public function all_trashed_user()
@@ -104,7 +105,7 @@ class UserController extends Controller
     }
     //========================================================================================================================
     /**
-     * method to restore soft delete user alraedy exist
+     * method to restore soft deleted user alraedy exist
      * @param   $user_id
      * @return /Illuminate\Http\JsonResponse
      */

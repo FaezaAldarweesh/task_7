@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\User;
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Log;
 use App\Http\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\Request;
@@ -88,6 +87,10 @@ class UserService {
             if(!$user){
                 throw new \Exception('user not found');
             }
+             //منع الأدمن من إزالة حسابه
+             if ($user->role == 'admin') {
+                throw new \Exception('You cannot soft delete admin account');
+            }
             $user->delete();
             return true;
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);
@@ -135,6 +138,10 @@ class UserService {
             $user = User::onlyTrashed()->find($user_id);
             if(!$user){
                 throw new \Exception('user not found');
+            }
+             //منع الأدمن من إزالة حسابه
+             else if ($user->role == 'admin') {
+                throw new \Exception('You cannot delete admin account');
             }
             return $user->forceDelete();
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);   

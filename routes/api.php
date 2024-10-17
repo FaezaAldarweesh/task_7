@@ -29,7 +29,7 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::post('logout',[AuthController::class ,'logout']); 
     Route::post('refresh', [AuthController::class ,'refresh']);
     
-
+    
     Route::apiResource('user',UserController::class); 
     Route::get('all_trashed_user', [UserController::class, 'all_trashed_user']);
     Route::get('restore_user/{user_id}', [UserController::class, 'restore']);
