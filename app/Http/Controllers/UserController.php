@@ -21,6 +21,7 @@ class UserController extends Controller
      */
     public function __construct(UserService $userservices)
     {
+        $this->middleware('security');
         $this->userservices = $userservices;
     }
     //===========================================================================================================================

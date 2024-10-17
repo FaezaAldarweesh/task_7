@@ -25,6 +25,7 @@ class TaskController extends Controller
      */
     public function __construct(TaskService $taskservices)
     {
+        $this->middleware('security');
         $this->taskservices = $taskservices;
     }
     //===========================================================================================================================

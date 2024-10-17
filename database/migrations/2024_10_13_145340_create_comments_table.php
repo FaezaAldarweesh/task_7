@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('comment');
             $table->morphs('commentable');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

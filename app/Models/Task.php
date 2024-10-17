@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use App\Events\TaskEvent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,18 @@ class Task extends Model
         'assigned_to',
         'depends_on',
     ];
+
+    //Accessors due_date
+    public function getPublishedAtAttribute($value)
+    {
+        return Carbon::parse($value)->format('d-m-Y H:i'); 
+    }
+
+    //Mutators due_date
+    public function setPublishedAtAttribute($value)
+    {
+        $this->attributes['due_date'] = Carbon::parse($value)->format('Y-m-d H:i:s'); 
+    }
 
      protected static function boot()
     {

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Task;
+use App\Models\Comment;
 use App\Events\TaskEvent;
 use App\Models\Task_dependency;
 use App\Models\TaskStatusUpdate;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Traits\ApiResponseTrait;
 use App\Http\Traits\ModelActionsTrait;
+use App\Models\Attachment;
 use Illuminate\Support\Facades\Request;
 
 class TaskService {
@@ -154,14 +156,29 @@ class TaskService {
             if(!$task){
                 throw new \Exception('task not found');
             }
-            $task_dependancies = Task_dependency::where('task_id',$task_id)->get();
 
-            $task->delete();
+            $task_dependancies = Task_dependency::where('task_id',$task_id)->get();
+            $task_comments = Comment::where('commentable_id',$task_id)->get();
+            $task_attachments = Attachment::where('attachmentable_id',$task_id)->get();
+            $task_Life_cycles = TaskStatusUpdate::where('task_id',$task_id)->get();
+
             foreach($task_dependancies as $task_dependancy){
                 $task_dependancy->delete();
             }
-
-
+            
+            foreach($task_comments as $task_comment){
+                $task_comment->delete();
+            }
+            
+            foreach($task_attachments as $task_attachment){
+                $task_attachment->delete();
+            }
+            
+            foreach($task_Life_cycles as $task_Life_cycle){
+                $task_Life_cycle->delete();
+            }
+            
+            $task->delete();
             return true;
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with deleting task', 400);}
@@ -192,9 +209,24 @@ class TaskService {
                 throw new \Exception('task not found');
             }
             $task_dependancies = Task_dependency::withTrashed()->where('task_id',$task_id)->get();
+            $task_comments = Comment::withTrashed()->where('commentable_id',$task_id)->get();
+            $task_attachments = Attachment::withTrashed()->where('attachmentable_id',$task_id)->get();
+            $task_Life_cycles = TaskStatusUpdate::withTrashed()->where('task_id',$task_id)->get();
 
             foreach($task_dependancies as $task_dependancy){
                 $task_dependancy->restore();
+            }
+
+            foreach($task_comments as $task_comment){
+                $task_comment->restore();
+            }
+
+            foreach($task_attachments as $task_attachment){
+                $task_attachment->restore();
+            }
+
+            foreach($task_Life_cycles as $task_Life_cycle){
+                $task_Life_cycle->restore();
             }
 
             return $task->restore();
@@ -216,11 +248,30 @@ class TaskService {
                 throw new \Exception('task not found');
             }
             $task_dependancies = Task_dependency::onlyTrashed()->where('task_id',$task_id)->get();
+            $task_comments = Comment::onlyTrashed()->where('commentable_id',$task_id)->get();
+            $task_attachments = Attachment::onlyTrashed()->where('attachmentable_id',$task_id)->get();
+            $task_Life_cycles = TaskStatusUpdate::onlyTrashed()->where('task_id',$task_id)->get();
+
+
+            $task->forceDelete();
 
             foreach($task_dependancies as $task_dependancy){
                 $task_dependancy->forceDelete();
             }
-            return $task->forceDelete();
+
+            foreach($task_comments as $task_comment){
+                $task_comment->forceDelete();
+            }
+
+            foreach($task_attachments as $task_attachment){
+                $task_attachment->forceDelete();
+            }
+
+            foreach($task_Life_cycles as $task_Life_cycle){
+                $task_Life_cycle->forceDelete();
+            }
+
+            return true;
         }catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);   
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with deleting task', 400);}
     }

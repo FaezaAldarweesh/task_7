@@ -15,10 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('action');
             $table->string('model_name');
-            $table->foreignId('task_id')->constrained('tasks');
-            $table->foreignId('coused_by')->constrained('users');
+            $table->foreignId('task_id')->constrained('tasks')->cascadeOnDelete();
+            $table->foreignId('coused_by')->constrained('users')->cascadeOnDelete();
             $table->json('descreption');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

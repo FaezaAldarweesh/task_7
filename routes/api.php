@@ -53,9 +53,7 @@ Route::group(['middleware' => ['auth:api']], function () {
 
 
     Route::post('add_Attachment/{task_id}', [AttachmentController::class,'store']); 
-    Route::put('update_Attachment/{Attachment_id}', [AttachmentController::class,'update']); 
     Route::get('all_Attachment', [AttachmentController::class,'index']); 
-    Route::delete('delete_Attachment/{Attachment_id}', [AttachmentController::class,'destroy']); 
 
     //Route::apiResource('role',RoleController::class); 
 

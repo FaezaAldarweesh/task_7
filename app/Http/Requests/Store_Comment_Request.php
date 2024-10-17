@@ -25,8 +25,7 @@ class Store_Comment_Request extends FormRequest
     public function rules(): array
     {
         return [
-            'created_by' => 'required|integer|exists:users,id',
-            'comment' => 'required|string|min:20|max:255',
+            'comment' => 'required|string|min:4|max:255',
         ];
     }
     //===========================================================================================================================
@@ -48,7 +47,6 @@ class Store_Comment_Request extends FormRequest
     public function attributes(): array
     {
         return [
-            'created_by' => 'اسم المستخدم',
             'comment' => 'التعليق',
         ];
     }
@@ -61,8 +59,6 @@ class Store_Comment_Request extends FormRequest
             'string' => 'يحب أن يكون الحقل :attribute يحوي محارف',
             'min' => 'الحد الأدنى لطول :attribute على الأقل هو 4 حرف',
             'max' => 'الحد الأقصى لطول  :attribute هو 50 حرف',
-            'integer' => 'يجب أن يكون الحقل :attribute من نمط int',
-            'exists' => 'يجب أن يكون :attribute موجودا مسبقا',
         ];
     }
 }

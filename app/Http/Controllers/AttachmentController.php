@@ -21,6 +21,7 @@ class AttachmentController extends Controller
      */
     public function __construct(AttachmentService $attachmentservices)
     {
+        $this->middleware('security');
         $this->attachmentservices = $attachmentservices;
     }
     //===========================================================================================================================
@@ -48,38 +49,5 @@ class AttachmentController extends Controller
     }
     
     //===========================================================================================================================
-    /**
-     * method to update attachment alraedy exist
-     * @param  Update_Attachment_Request $request
-     * @param  Attachment $attachment
-     * @return /Illuminate\Http\JsonResponse
-     */
-    public function update(Update_Attachment_Request $request, $attachment_id)
-    {
-
-        $attachment = $this->attachmentservices->update_Attachment($request->validated(), $attachment_id);
-
-        // In case error messages are returned from the services section 
-        if ($attachment instanceof \Illuminate\Http\JsonResponse) {
-            return $attachment;
-        }
-            return $this->success_Response(new AttachmentResources($attachment), "Attachment updated successfully", 200);
-    }
-    //===========================================================================================================================
-    /**
-     * method to soft delete attachment alraedy exist
-     * @param  $attachment_id
-     * @return /Illuminate\Http\JsonResponse
-     */
-    public function destroy($attachment_id)
-    {
-        $attachment = $this->attachmentservices->delete_attachment($attachment_id);
-
-        // In case error messages are returned from the services section 
-        if ($attachment instanceof \Illuminate\Http\JsonResponse) {
-            return $attachment;
-        }
-            return $this->success_Response(null, "attachment deleted successfully", 200);
-    }
-    //========================================================================================================================
+    
 }

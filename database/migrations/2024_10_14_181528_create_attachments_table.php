@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->morphs('attachmentable');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
