@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Traits\ApiResponseTrait;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Traits\ModelActionsTrait;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -84,6 +85,8 @@ class AttachmentService {
                 'created_by' => Auth::id(),
                 'name' => $fileName
             ]);
+            
+            Cache::forget('all_task');
 
             $this->model('create Attachment', 'Attachment', $task_id, Auth::id(), $file);
 

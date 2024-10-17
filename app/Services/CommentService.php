@@ -7,6 +7,7 @@ use App\Models\Comment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Traits\ApiResponseTrait;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Traits\ModelActionsTrait;
 
 class CommentService {
@@ -18,7 +19,9 @@ class CommentService {
      */
     public function get_all_Comments(){
         try {
-            $comment = Comment::where('created_by', '=', Auth::id())->get();
+            $comment = Cache::remember('all_comment', 1800, function ()  {
+                return Comment::where('created_by', '=', Auth::id())->get();
+            });
             return $comment;
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with fetche comments', 400);}
     }
@@ -45,6 +48,8 @@ class CommentService {
                 'created_by' => Auth::id(),
                 'comment' => $data['comment']
             ]);
+
+            Cache::forget('all_task');
 
             $this->model('create comment', 'Comment', $id, Auth::id(), $comment);
 
@@ -76,6 +81,8 @@ class CommentService {
                 throw new \Exception('comment dose not belongs to you');
 
             }
+
+            Cache::forget('all_task');
 
             return $comment;
         } catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 400);

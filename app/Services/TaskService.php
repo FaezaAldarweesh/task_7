@@ -11,6 +11,7 @@ use App\Models\TaskStatusUpdate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Traits\ApiResponseTrait;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Traits\ModelActionsTrait;
 use Illuminate\Support\Facades\Request;
 
@@ -27,7 +28,10 @@ class TaskService {
      */
     public function get_all_Tasks($type,$status,$assigned_to,$due_date,$priority,$depends_on){
         try {
-            return Task::filter($type,$status,$assigned_to,$due_date,$priority,$depends_on)->get();
+            $tasks = Cache::remember('all_task', 1800, function () use ($type, $status, $assigned_to, $due_date, $priority, $depends_on) {
+                return Task::filter($type, $status, $assigned_to, $due_date, $priority, $depends_on)->get();
+            });
+          return $tasks;
         } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with fetche tasks', 400);}
     }
 //========================================================================================================================
@@ -85,6 +89,7 @@ class TaskService {
                 }
             }
             
+            Cache::forget('all_task');
             //إضافة سجل عملية تخزين تاسك إلى جدول TaskStatusUpdates
            $this->model('create','Task',$task->id, Auth::id(), $task);
 
@@ -154,6 +159,8 @@ class TaskService {
                 $task->Task_dependencies()->sync($depend_ids);
             }
 
+            Cache::forget('all_task');
+
            //إضافة سجل عملية تعديل على التاسك إلى جدول TaskStatusUpdates
            $this->model('Update','Task',$task->id, Auth::id(), $task);
 
@@ -170,18 +177,23 @@ class TaskService {
      */
     public function view_Task($task_id) {
         try {    
-            $task = Task::find($task_id);
+
+            $task = Cache::remember('task_'.$task_id, 150, function() use ($task_id) {
+                // جلب التاسك مع العلاقات المطلوبة
+                return Task::with('Task_dependencies', 'comments', 'attachments')->find($task_id);
+            });
+
 
             if(!$task){                
                 //إضافة سجل خطأ إلى جدول ErrorTask
                 $this->error('update','Task',null, Auth::id(), null ,'task not found');
                 throw new \Exception('task not found');
-            }else{
-                $task->load('Task_dependencies', 'comments', 'attachments');
-                return $task;
             }
+            
+            return $task;
+
         } catch (\Exception $e) { Log::error($e->getMessage()); return $this->failed_Response($e->getMessage(), 404);
-        } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response('Something went wrong with view task', 400);}
+        } catch (\Throwable $th) { Log::error($th->getMessage()); return $this->failed_Response($th->getMessage(), 400);}
     }
 //========================================================================================================================
     /**
@@ -363,6 +375,8 @@ class TaskService {
                 $task->save();
             }
     
+            Cache::forget('all_task');
+
             // تسجيل تحديث حالة المهمة الأصلية
             $this->model('Update status', 'Task', $task->id, Auth::id(), $task);
     
@@ -389,6 +403,8 @@ class TaskService {
             $task->assigned_to = $data['assigned_to'];
             $task->save();
 
+            Cache::forget('all_task');
+
             $this->model('assign status','Task',$task->id, Auth::id(), $task);
 
             return $task;
@@ -413,6 +429,8 @@ class TaskService {
             }
             $task->assigned_to = $data['assigned_to'] ?? $task->assigned_to;
             $task->save();
+
+            Cache::forget('all_task');
 
             $this->model('reassign status','Task',$task->id, Auth::id(), $task);
 
