@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Attachment;
 use Illuminate\Http\Request;
 use App\Http\Traits\ApiResponseTrait;
 use App\Services\AttachmentService;
 use App\Http\Resources\AttachmentResources;
-use App\Http\Requests\Store_Attachment_Request;
-use App\Http\Requests\Update_Attachment_Request;
+use App\Http\Requests\Attachment_Requests\Store_Attachment_Request;
+use App\Http\Requests\Attachment_Requests\Update_Attachment_Request;
 
 class AttachmentController extends Controller
 {

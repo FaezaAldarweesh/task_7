@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use App\Services\CommentService;
 use App\Http\Traits\ApiResponseTrait;
 use App\Http\Resources\CommentResources;
-use App\Http\Requests\Store_Comment_Request;
-use App\Http\Requests\Update_Comment_Request;
+use App\Http\Requests\Comment_Requests\Store_Comment_Request;
+use App\Http\Requests\Comment_Requests\Update_Comment_Request;
 
 class CommentController extends Controller
 {

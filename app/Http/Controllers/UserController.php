@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use App\Services\UserService;
 use App\Http\Resources\UserResources;
 use App\Http\Traits\ApiResponseTrait;
-use App\Http\Requests\Store_User_Request;
-use App\Http\Requests\Update_User_Request;
+use App\Http\Requests\User_Rqeuests\Store_User_Request;
+use App\Http\Requests\User_Rqeuests\Update_User_Request;
 
 class UserController extends Controller
 {

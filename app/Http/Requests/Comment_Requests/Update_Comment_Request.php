@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Comment_Requests;
 
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class assign_Request extends FormRequest
+class Update_Comment_Request extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,8 +25,8 @@ class assign_Request extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'assigned_to' => 'required|integer|exists:users,id',
+        return [            
+            'comment' => 'sometimes|nullable|string|min:20|max:255',
         ];
     }
     //===========================================================================================================================
@@ -47,7 +48,7 @@ class assign_Request extends FormRequest
     public function attributes(): array
     {
         return [
-            'assigned_to' => 'اسم الموظف',
+            'comment' => 'التعليق',
         ];
     }
     //===========================================================================================================================
@@ -55,9 +56,9 @@ class assign_Request extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => ' :attribute مطلوب',
-            'integer' => 'يجب أن يكون الحقل :attribute من نمط int',
-            'exists' => 'يجب أن يكون :attribute موجودا مسبقا',
+            'string' => 'يحب أن يكون الحقل :attribute يحوي محارف',
+            'min' => 'الحد الأدنى لطول :attribute على الأقل هو 4 حرف',
+            'max' => 'الحد الأقصى لطول  :attribute هو 50 حرف',
         ];
     }
 }

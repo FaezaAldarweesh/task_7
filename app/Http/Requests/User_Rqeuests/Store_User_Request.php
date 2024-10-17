@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\User_Rqeuests;
 
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class Update_Comment_Request extends FormRequest
+class Store_User_Request extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,8 +24,10 @@ class Update_Comment_Request extends FormRequest
      */
     public function rules(): array
     {
-        return [            
-            'comment' => 'sometimes|nullable|string|min:20|max:255',
+        return [
+            'name' => 'required|regex:/^[\p{L}\s]+$/u|min:2|max:50',
+            'email' => 'required|unique:users,email|email',
+            'password' => 'required|string|min:8',
         ];
     }
     //===========================================================================================================================
@@ -48,7 +49,9 @@ class Update_Comment_Request extends FormRequest
     public function attributes(): array
     {
         return [
-            'comment' => 'التعليق',
+            'name' => 'اسم المستخدم',
+            'email' => 'الإيميل',
+            'password' => 'كلمة المرور',
         ];
     }
     //===========================================================================================================================
@@ -56,9 +59,14 @@ class Update_Comment_Request extends FormRequest
     public function messages(): array
     {
         return [
-            'string' => 'يحب أن يكون الحقل :attribute يحوي محارف',
-            'min' => 'الحد الأدنى لطول :attribute على الأقل هو 4 حرف',
+            'required' => ' :attribute مطلوب',
+            'unique' => ':attribute  موجود سابقاً , يجب أن يكون :attribute غير مكرر',
+            'regex' => 'يجب أن يحوي  :attribute على أحرف فقط',
+            'email' => 'يجب أن يكون الحقل :attribute يحوي على لإيميل من نمط @',
             'max' => 'الحد الأقصى لطول  :attribute هو 50 حرف',
+            'string' => 'يجب أن يكون :attribute عبارة عن سلسة نصية',
+            'name.min' => 'الحد الأدنى لطول :attribute على الأقل هو 2 حرف',
+            'password.min' => 'الحد الأدنى لطول :attribute على الأقل هو 8 محرف',
         ];
     }
 }

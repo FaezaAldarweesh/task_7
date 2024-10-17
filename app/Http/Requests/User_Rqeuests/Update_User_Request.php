@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\User_Rqeuests;
 
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class Update_Attachment_Request extends FormRequest
+class Update_User_Request extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,8 +25,12 @@ class Update_Attachment_Request extends FormRequest
      */
     public function rules(): array
     {
+        $user_id = $this->route('user');
+
         return [
-            'attachment' => 'sometimes|nullable|file|mimes:doc,docx,zip,pdf,txt|max:512000',
+            'name' => 'sometimes|nullable|regex:/^[\p{L}\s]+$/u|min:2|max:50',
+            'email' => ['sometimes','nullable', 'email', Rule::unique('users', 'email')->ignore($user_id)],
+            'password' => 'sometimes|nullable|string|min:8',
         ];
     }
     //===========================================================================================================================
@@ -48,7 +52,9 @@ class Update_Attachment_Request extends FormRequest
     public function attributes(): array
     {
         return [
-            'attachment' => 'ملف المرفقات',
+            'name' => 'اسم المستخدم',
+            'email' => 'الإيميل',
+            'password' => 'كلمة المرور',
         ];
     }
     //===========================================================================================================================
@@ -56,9 +62,12 @@ class Update_Attachment_Request extends FormRequest
     public function messages(): array
     {
         return [
-            'file' => 'يجب أن يكون :attribute ملفاَ ',
-            'mimes' => 'يجب أن يكون  :attribute من نمط word , pdf , zip , txt',
-            'max' => 'الحد الأقصى لحجم  :attribute هو نصف جيغا ',
+            'unique' => ':attribute  موجود سابقاً , يجب أن يكون :attribute غير مكرر',
+            'regex' => 'يجب أن يحوي  :attribute على أحرف فقط',
+            'email' => 'يجب أن يكون الحقل :attribute يحوي على لإيميل من نمط @',
+            'max' => 'الحد الأقصى لطول  :attribute هو 50 حرف',
+            'name.min' => 'الحد الأدنى لطول :attribute على الأقل هو 2 حرف',
+            'password.min' => 'الحد الأدنى لطول :attribute على الأقل هو 8 محرف',
         ];
     }
 }

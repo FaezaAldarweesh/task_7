@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Tasks_Requests;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class Store_Attachment_Request extends FormRequest
+class update_reassign_Request extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,7 +25,7 @@ class Store_Attachment_Request extends FormRequest
     public function rules(): array
     {
         return [
-            'attachment' => 'required|file|mimes:doc,docx,zip,pdf,txt|max:512000',
+            'assigned_to' => 'sometimes|nullable|integer|exists:users,id',
         ];
     }
     //===========================================================================================================================
@@ -47,7 +47,7 @@ class Store_Attachment_Request extends FormRequest
     public function attributes(): array
     {
         return [
-            'attachment' => 'ملف المرفقات',
+            'assigned_to' => 'اسم الموظف',
         ];
     }
     //===========================================================================================================================
@@ -55,10 +55,8 @@ class Store_Attachment_Request extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => ' :attribute مطلوب',
-            'file' => 'يجب أن يكون :attribute ملفاَ ',
-            'mimes' => 'يجب أن يكون  :attribute من نمط word , pdf , zip , txt',
-            'max' => 'الحد الأقصى لحجم  :attribute هو نصف جيغا ',
+            'integer' => 'يجب أن يكون الحقل :attribute من نمط int',
+            'exists' => 'يجب أن يكون :attribute موجودا مسبقا',
         ];
     }
 }

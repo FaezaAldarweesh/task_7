@@ -7,12 +7,12 @@ use Illuminate\Http\Request;
 use App\Services\TaskService;
 use App\Http\Resources\TaskResources;
 use App\Http\Traits\ApiResponseTrait;
-use App\Http\Requests\Store_Task_Request;
+use App\Http\Requests\Tasks_Requests\Store_Task_Request;
 use App\Http\Resources\ViewTaskResources;
-use App\Http\Requests\Update_Task_Request;
-use App\Http\Requests\Update_Task_status_Request;
-use App\Http\Requests\assign_Request;
-use App\Http\Requests\update_reassign_Request;
+use App\Http\Requests\Tasks_Requests\Update_Task_Request;
+use App\Http\Requests\Tasks_Requests\Update_Task_status_Request;
+use App\Http\Requests\Tasks_Requests\assign_Request;
+use App\Http\Requests\Tasks_Requests\update_reassign_Request;
 
 class TaskController extends Controller
 {
@@ -25,12 +25,13 @@ class TaskController extends Controller
      */
     public function __construct(TaskService $taskservices)
     {
+                //security middleware
         $this->middleware('security');
         $this->taskservices = $taskservices;
     }
     //===========================================================================================================================
     /**
-     * method to view all tasks
+     * method to view all tasks with a filtes on (type,status,assigned_to,due_date,priority,depends_on)
      * @param   Request $request
      * @return /Illuminate\Http\JsonResponse
      * TaskResources to customize the return responses.
@@ -98,7 +99,7 @@ class TaskController extends Controller
     }
     //========================================================================================================================
     /**
-     * method to return all soft delete tasks
+     * method to return all soft deleted tasks
      * @return /Illuminate\Http\JsonResponse if have an error
      */
     public function all_trashed_tasks()
@@ -108,7 +109,7 @@ class TaskController extends Controller
     }
     //========================================================================================================================
     /**
-     * method to restore soft delete task alraedy exist
+     * method to restore soft deleted task alraedy exist
      * @param   $task_id
      * @return /Illuminate\Http\JsonResponse
      */
@@ -141,7 +142,8 @@ class TaskController extends Controller
         
     //========================================================================================================================
     /**
-     * method to
+     * method to update status of task 
+     * @param   Update_Task_status_Request $request
      * @param   $task_id
      * @return /Illuminate\Http\JsonResponse
      */
@@ -157,8 +159,9 @@ class TaskController extends Controller
     }
         
     //========================================================================================================================
-        /**
-     * method to
+    /**
+     * method to assign task to employee
+     * @param   assign_Request $request
      * @param   $task_id
      * @return /Illuminate\Http\JsonResponse
      */
@@ -174,9 +177,10 @@ class TaskController extends Controller
     }
         
     //========================================================================================================================
-        /**
-     * method to
+    /**
+     * method to reassign task to employee
      * @param   $task_id
+     * @param   update_reassign_Request $request
      * @return /Illuminate\Http\JsonResponse
      */
     public function update_reassign(update_reassign_Request $request,$task_id)
@@ -191,6 +195,10 @@ class TaskController extends Controller
     }
         
     //========================================================================================================================
+    /**
+     * method to get all blocked tasks
+     * @return /Illuminate\Http\JsonResponse
+     */
     public function task_blocked()
     {  
         $tasks = $this->taskservices->task_blocked();
